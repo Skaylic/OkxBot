@@ -1,0 +1,548 @@
+Index: skay/__init__.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/__init__.py b/skay/__init__.py
+new file mode 100644
+--- /dev/null	(date 1728653714892)
++++ b/skay/__init__.py	(date 1728653714892)
+@@ -0,0 +1,2 @@
++from .Logger import setup_logger
++from .Bot import Bot
+\ No newline at end of file
+Index: .env
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.env b/.env
+new file mode 100644
+--- /dev/null	(date 1728655521898)
++++ b/.env	(date 1728655521898)
+@@ -0,0 +1,11 @@
++BOT_NAME="OkxBtc"
++API_KEY="Api_Key"
++API_SECRET_KEY="Secret_Key"
++API_PASSPHRASE="Passphrase"
++FLAG='0'
++
++SYMBOL="BTC-USDT"
++QTY=10
++MIN=55000
++MAX=90000
++PERCENT=1
+\ No newline at end of file
+Index: skay/Models.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/Models.py b/skay/Models.py
+new file mode 100644
+--- /dev/null	(date 1728653875004)
++++ b/skay/Models.py	(date 1728653875004)
+@@ -0,0 +1,57 @@
++from typing import Dict, Any
++from sqlalchemy import String, Integer, Float, Boolean
++from sqlalchemy.orm import DeclarativeBase
++from sqlalchemy.orm import Mapped
++from sqlalchemy.orm import mapped_column
++from sqlalchemy.ext.declarative import declared_attr
++from sqlalchemy import Table
++
++
++class Base(DeclarativeBase):
++
++    __table__: Table  # def for mypy
++
++    @declared_attr
++    def __tablename__(cls):  # pylint: disable=no-self-argument
++        return cls.__name__  # pylint: disable= no-member
++
++    def to_dict(self) -> Dict[str, Any]:
++        """Serializes only column data."""
++        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
++
++
++# class Instruments(Base):
++#     __tablename__ = "instruments"
++#     id: Mapped[int] = mapped_column(primary_key=True)
++#     baseCcy: Mapped[str] = mapped_column(String(30))
++#     category: Mapped[int] = mapped_column()
++#     instId: Mapped[str] = mapped_column(String(30))
++#     instType: Mapped[str] = mapped_column(String(30))
++#     lotSz: Mapped[float] = mapped_column(Float)
++#     minSz: Mapped[float] = mapped_column(Float)
++#     quoteCcy: Mapped[str] = mapped_column(String(30))
++#     state: Mapped[str] = mapped_column(String(30))
++#     tickSz: Mapped[float] = mapped_column(Float)
++
++
++class Orders(Base):
++    __tablename__ = "orders"
++    id: Mapped[int] = mapped_column(primary_key=True)
++    ordId: Mapped[int] = mapped_column(Integer)
++    cTime: Mapped[str] = mapped_column(String(30))
++    sz: Mapped[int] = mapped_column(Float)
++    px: Mapped[float] = mapped_column(Float)
++    grid_px: Mapped[float] = mapped_column(Float)
++    profit: Mapped[float] = mapped_column(Float, default=0.0)
++    fee: Mapped[float] = mapped_column(Float)
++    feeCcy: Mapped[str] = mapped_column(String(30))
++    side: Mapped[str] = mapped_column(String(30))
++    state: Mapped[str] = mapped_column(String(30))
++    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
++    instType: Mapped[int] = mapped_column(String(30), default='')
++    instId: Mapped[int] = mapped_column(String(30), default='')
++    tgtCcy: Mapped[int] = mapped_column(String(30), default='')
++    tag: Mapped[str] = mapped_column(String(30), default='')
++
++    def __repr__(self) -> str:
++        return f"Side: {self.side!r} Px: {self.px!r} Sz: {self.sz!r} Active: {self.is_active!r}"
+Index: main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/main.py b/main.py
+new file mode 100644
+--- /dev/null	(date 1728652703433)
++++ b/main.py	(date 1728652703433)
+@@ -0,0 +1,40 @@
++import asyncio
++from asyncio.exceptions import CancelledError, IncompleteReadError
++from websockets.exceptions import ConnectionClosed, ConnectionClosedError
++from skay.Bot import Bot
++from dotenv import load_dotenv
++from skay.Logger import setup_logger
++from time import sleep, strftime
++from httpx import TimeoutException
++
++logger = setup_logger()
++
++load_dotenv()
++bot = Bot()
++
++
++async def start():
++    try:
++        await bot.run()
++    except (KeyboardInterrupt, CancelledError):
++        logger.info("Соединение остановлено вручную " + strftime('%Y-%m-%d %H:%M:%S'))
++    except IncompleteReadError as e:
++        logger.info("IncompleteReadError " + strftime('%Y-%m-%d %H:%M:%S'))
++        sleep(90)
++        await start()
++    except (ConnectionClosed, ConnectionClosedError) as e:
++        logger.info("ConnectionClosed " + strftime('%Y-%m-%d %H:%M:%S'))
++        sleep(90)
++        await start()
++    except TimeoutException as e:
++        logger.info("TimeoutException " + strftime('%Y-%m-%d %H:%M:%S'))
++        sleep(90)
++        await start()
++    except TimeoutError as e:
++        logger.info("TimeoutError " + strftime('%Y-%m-%d %H:%M:%S'))
++        sleep(90)
++        await start()
++
++
++if __name__ == '__main__':
++    asyncio.run(start())
+Index: requirements.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+--- /dev/null	(date 1728654037423)
++++ b/requirements.txt	(date 1728654037423)
+@@ -0,0 +1,5 @@
++python-okx~=0.3.0
++python-dotenv~=1.0.1
++numpy~=2.0.0
++SQLAlchemy~=2.0.31
++websockets~=12.0
+\ No newline at end of file
+Index: .idea/inspectionProfiles/Project_Default.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/inspectionProfiles/Project_Default.xml b/.idea/inspectionProfiles/Project_Default.xml
+new file mode 100644
+--- /dev/null	(date 1728652550615)
++++ b/.idea/inspectionProfiles/Project_Default.xml	(date 1728652550615)
+@@ -0,0 +1,14 @@
++<component name="InspectionProjectProfileManager">
++  <profile version="1.0">
++    <option name="myName" value="Project Default" />
++    <inspection_tool class="PyInterpreterInspection" enabled="false" level="WARNING" enabled_by_default="false" />
++    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
++      <option name="ignoredErrors">
++        <list>
++          <option value="N801" />
++          <option value="N814" />
++        </list>
++      </option>
++    </inspection_tool>
++  </profile>
++</component>
+\ No newline at end of file
+Index: skay/Bot.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/Bot.py b/skay/Bot.py
+new file mode 100644
+--- /dev/null	(date 1728653770217)
++++ b/skay/Bot.py	(date 1728653770217)
+@@ -0,0 +1,118 @@
++import os
++import asyncio
++from time import strftime
++import logging
++from skay.Okx import Okx
++from skay.Database import Database
++from skay.Models import Orders
++
++logger = logging.getLogger('SkayBot')
++db = Database().set_db()
++
++
++class Bot(Okx):
++
++    def __init__(self):
++        super().__init__()
++        self.min = float(os.getenv('MIN'))
++        self.max = float(os.getenv('MAX'))
++        self.percent = float(os.getenv('PERCENT'))
++        self.grid = []
++        self.grid_px = 0.0
++        self.a = 0
++        self.y = 0
++        self.order = None
++
++    async def check(self):
++        self.get_grid_position()
++        while True:
++            if self.mark_px:
++                self.grid_px = round(self.array_grid(self.grid, self.mark_px), 9)
++                self.get_grid_position()
++                pos = self.is_position()
++                if self.mark_price_candle and self.mark_price_candle[1] < self.mark_price_candle[4] and self.a == 0:
++                    self.y = self.grid_px
++                    self.a = 1
++                elif self.mark_price_candle and self.mark_price_candle[1] > self.mark_price_candle[4] and self.a == 1:
++                    self.y = self.grid_px
++                    self.a = 0
++                if pos and self.bal_quote_ccy > pos.sz and self.order is None:
++                    self.y = self.grid_px
++                    await self.send_ticker(side='sell', sz=pos.sz + pos.fee)
++                elif pos is False and self.a == 1 and self.mark_px >= self.y and self.bal_base_ccy > self.qty and self.order is None:
++                    if self.y != self.grid_px:
++                        self.y = self.grid_px
++                    else:
++                        self.y = float(self.grid_px + (self.grid_px * self.percent / 100))
++                    await self.send_ticker(side='buy', px=self.mark_px)
++                if (self.order and self.order['state'] == 'filled'
++                        and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
++                    self.order['profit'] = 0.0
++                    _ord = self.save_order(self.order, False)
++                    logger.info(_ord)
++                elif (self.order and self.order['state'] == 'filled'
++                      and self.order['side'] == 'buy' and self.order['tag'] == 'bot'):
++                    self.order['profit'] = 0.0
++                    _ord = self.save_order(self.order, True)
++                    logger.info(_ord)
++                    self.order = None
++                elif pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
++                    summ = ((float(self.order.get('avgPx')) * float(self.order.get('sz')) + float(
++                        self.order.get('fee')))
++                            - (float(pos.sz) * float(pos.px)) + (float(pos.fee) * float(pos.px)))
++                    self.order.update({'profit': summ})
++                    _ord = self.save_order(self.order, False)
++                    pos.cTime = strftime('%Y%m%d%H%M%S')
++                    pos.is_active = False
++                    db.commit()
++                    logger.info(_ord)
++                    self.order = None
++            await asyncio.sleep(1)
++
++    def save_order(self, order, active=True):
++        _ord = Orders(
++            instType=order.get('instType'),
++            sz=order.get('sz'),
++            px=order.get('avgPx'),
++            grid_px=self.grid_px,
++            fee=order.get('fee'),
++            profit=order.get('profit'),
++            side=order.get('side'),
++            feeCcy=order.get('feeCcy'),
++            instId=order.get('instId'),
++            tgtCcy=order.get('tgtCcy'),
++            ordId=order.get('ordId'),
++            state=order.get('state'),
++            cTime=strftime('%Y%m%d%H%M%S'),
++            tag=order.get('tag'),
++            is_active=active
++        )
++        db.add(_ord)
++        db.commit()
++        return _ord
++
++    def get_grid_position(self):
++        x = self.min
++        while x <= self.max:
++            x += (x * self.percent / 100)
++            self.grid.append(x)
++
++    def array_grid(self, a, val):
++        return round(min([x for x in a if x > val] or [None]), 9)
++
++    def is_position(self):
++        mrx = float(self.mark_px - (self.mark_px * self.percent / 100))
++        _ord = (db.query(Orders).filter(Orders.side == 'buy', Orders.px < mrx, Orders.is_active == True)
++                .order_by(Orders.px).first())
++        if _ord:
++            return _ord
++        _ord = db.query(Orders).filter(Orders.side == 'buy', Orders.grid_px == self.grid_px,
++                                       Orders.is_active == True).first()
++        if _ord:
++            return None
++        else:
++            return False
++
++    async def run(self):
++        logger.info('Started ' + strftime('%Y-%m-%d %H:%M:%S'))
++        await asyncio.gather(self.check(), self.ws_public(), self.ws_business(), self.ws_private())
+Index: skay/Okx.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/Okx.py b/skay/Okx.py
+new file mode 100644
+--- /dev/null	(date 1728653749928)
++++ b/skay/Okx.py	(date 1728653749928)
+@@ -0,0 +1,155 @@
++import base64
++import hmac
++import json
++import os
++from dotenv import load_dotenv
++import websockets
++from datetime import datetime
++import logging
++from time import strftime
++from pprint import pp
++
++load_dotenv()
++
++logger = logging.getLogger('SkayBot')
++
++
++class Okx:
++
++    def __init__(self):
++        self.api_key = os.getenv('API_KEY')
++        self.api_secret = os.getenv('API_SECRET_KEY')
++        self.passphrase = os.getenv('API_PASSPHRASE')
++        self.symbol = os.getenv('SYMBOL')
++        self.qty = float(os.getenv('QTY'))
++        self.base_ccy = self.symbol.split('-')[1]
++        self.quote_ccy = self.symbol.split('-')[0]
++        self.bal_base_ccy = 0.0
++        self.bal_quote_ccy = 0.0
++        self.mark_px = 0.0
++        self.sz = 0.0
++        self.mark_price_candle = []
++        self.order_id = None
++        self.order = None
++
++    def sign(self, key: str, secret: str, passphrase: str):
++        ts = str(int(datetime.now().timestamp()))
++        args = dict(apiKey=key, passphrase=passphrase, timestamp=ts)
++        sign = ts + 'GET' + '/users/self/verify'
++        mac = hmac.new(bytes(secret, encoding='utf8'), bytes(sign, encoding='utf-8'), digestmod='sha256')
++        args['sign'] = base64.b64encode(mac.digest()).decode(encoding='utf-8')
++        return args
++
++    async def send(self, ws, op: str, args: list, ids=''):
++        if not ids:
++            subs = dict(op=op, args=args)
++        else:
++            subs = dict(id=ids, op=op, args=args)
++        await ws.send(json.dumps(subs))
++
++    async def ws_private(self):
++        url = 'wss://wsaws.okx.com:8443/ws/v5/private'
++        async with websockets.connect(url) as self.ws_1:
++            login_args: dict = self.sign(self.api_key, self.api_secret, self.passphrase)
++            await self.send(self.ws_1, 'login', [login_args])
++
++            async for msg in self.ws_1:
++                r = await self.callback_private(msg)
++                if r == 'login':
++                    await self.send(self.ws_1, 'subscribe', [{'channel': 'balance_and_position'}])
++                    await self.send(self.ws_1, 'subscribe',
++                                    [{'channel': 'orders', 'instType': 'ANY', 'instId': self.symbol}])
++
++    async def ws_public(self):
++        url = 'wss://wsaws.okx.com:8443/ws/v5/public'
++        async with websockets.connect(url) as self.ws_2:
++            await self.send(self.ws_2, 'subscribe', [{'channel': 'mark-price', 'instId': self.symbol}])
++
++            async for msg in self.ws_2:
++                await self.callback_public(msg)
++
++    async def ws_business(self):
++        url = 'wss://wsaws.okx.com:8443/ws/v5/business'
++        async with websockets.connect(url) as self.ws_3:
++            await self.send(self.ws_3, 'subscribe', [{'channel': 'candle4H', 'instId': self.symbol}])
++
++            async for msg in self.ws_3:
++                await self.callback_business(msg)
++
++    async def callback_private(self, msg):
++        msg = json.loads(msg)
++        ev = msg.get('event')
++        data = msg.get('data')
++        if msg.get('event') == 'channel-conn-count-error':
++            logger.error('Error: Channel conn count error!')
++            exit()
++        if ev == 'error':
++            logger.error(f"Error: {msg}")
++        elif ev == 'login':
++            logger.info('Ur Logged in')
++            return 'login'
++        elif ev in ['subscribe', 'unsubscribe'] and msg.get('arg'):
++            logger.info(f"{ev.upper()} = {msg.get('arg')['channel']}")
++        elif msg.get('arg') and msg.get('arg')['channel'] == 'balance_and_position' and data and len(data) > 0:
++            for bl in data[0]['balData']:
++                if bl['ccy'] == self.quote_ccy:
++                    self.bal_quote_ccy = float(bl['cashBal'])
++                elif bl['ccy'] == self.base_ccy:
++                    self.bal_base_ccy = float(bl['cashBal'])
++        elif msg.get('op') == 'order' and int(msg.get('code')) == 0:
++            self.order_id = data[0]['ordId']
++        elif msg.get('op') == 'order' and int(msg.get('code')) == 1 and int(data[0]['sCode']) != 51008:
++            logger.error(f'Error: {data[0]['sCode']} {data[0]["sMsg"]}')
++            exit(int(data[0]['sCode']))
++        elif msg.get('arg') and msg.get('arg')['channel'] == 'orders' and data and len(data) > 0:
++            if data[0]['state'] == 'filled':
++                self.order = data[0]
++
++    async def callback_public(self, msg):
++        msg = json.loads(msg)
++        ev = msg.get('event')
++        data = msg.get('data')
++        if ev == 'error':
++            logger.error(f"Error: {msg}")
++        elif ev in ['subscribe', 'unsubscribe'] and msg.get('arg'):
++            logger.info(f"{ev.upper()} = {msg.get('arg')['channel']}")
++        elif msg.get('arg') and msg.get('arg')['channel'] == 'mark-price' and data and len(data) > 0:
++            self.mark_px = float(data[0]['markPx'])
++            self.size(self.mark_px)
++
++    async def callback_business(self, msg):
++        msg = json.loads(msg)
++        ev = msg.get('event')
++        data = msg.get('data')
++        if ev == 'error':
++            logger.error(f"Error: {msg}")
++        elif ev in ['subscribe', 'unsubscribe'] and msg.get('arg'):
++            logger.info(f"{ev.upper()} = {msg.get('arg')['channel']}")
++        elif msg.get('arg') and msg.get('arg')['channel'] == 'candle4H' and data and len(data) > 0:
++            self.mark_price_candle = data[0]
++
++    async def send_ticker(self, side='buy', sz=None, px=None, tag=''):
++        if not sz:
++            sz = self.sz
++        if not px:
++            px = self.mark_px
++        if not tag:
++            tag = 'bot'
++        await self.send(self.ws_1, "order",
++                        [{"instId": self.symbol,
++                          "tdMode": "cash",
++                          "ordType": "market",
++                          "sz": sz,
++                          "px": px,
++                          "side": side,
++                          "tgtCcy": 'base_ccy',
++                          'tag': tag}],
++                        strftime("%Y%m%d%H%M%S"))
++
++    def size(self, mk):
++        if self.bal_base_ccy < 200:
++            self.sz = self.qty / 2 / mk
++        elif 200 < self.bal_base_ccy < 500:
++            self.sz = self.qty / mk
++        elif 500 < self.bal_base_ccy < 1000:
++            self.sz = self.qty * 2 / mk
+Index: skay/Logger.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/Logger.py b/skay/Logger.py
+new file mode 100644
+--- /dev/null	(date 1728653823545)
++++ b/skay/Logger.py	(date 1728653823545)
+@@ -0,0 +1,21 @@
++import logging
++
++
++def setup_logger():
++    """
++    Использую logging
++    чтобы при деплое легко переключить сохранение логов в файл
++    :return:
++    """
++    log_Format = "%(asctime)s: %(levelname).3s | (%(filename)s): %(funcName)s (%(lineno)d) | %(message)s"
++    logging.basicConfig(
++        filename='applogs.log',
++        datefmt='%y-%m-%d %H:%M:%S',
++        format=log_Format,
++        encoding='utf-8'
++    )
++    cons = logging.StreamHandler()
++    logger = logging.getLogger('SkayBot')
++    logger.setLevel(logging.DEBUG)
++    logger.addHandler(cons)
++    return logger
+Index: skay/Database.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/skay/Database.py b/skay/Database.py
+new file mode 100644
+--- /dev/null	(date 1728653799686)
++++ b/skay/Database.py	(date 1728653799686)
+@@ -0,0 +1,21 @@
++import os
++from skay.Models import Base
++from sqlalchemy import create_engine
++from sqlalchemy.orm import sessionmaker
++
++
++class Database:
++
++    def __init__(self):
++        self.db = None
++
++    def set_db(self, name='db'):
++        basedir = os.path.abspath(os.path.dirname(__file__))
++
++        db_sqlite = 'sqlite:///' + os.path.join(basedir, f'../{name}.sqlite')
++        engine = create_engine(db_sqlite, echo=False)
++
++        Base.metadata.create_all(engine)
++        Session = sessionmaker(bind=engine)
++        self.db = Session()
++        return self.db

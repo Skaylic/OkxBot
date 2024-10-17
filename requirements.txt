@@ -1,0 +1,5 @@
+python-okx~=0.3.0
+python-dotenv~=1.0.1
+numpy~=2.0.0
+SQLAlchemy~=2.0.31
+websockets~=12.0
