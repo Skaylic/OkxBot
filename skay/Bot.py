@@ -28,7 +28,6 @@ class Bot(Okx):
         while True:
             if self.mark_px:
                 self.grid_px = round(self.array_grid(self.grid, self.mark_px), 9)
-                self.get_grid_position()
                 pos = self.is_position()
                 if (self.mark_price_candle and self.mark_price_candle[1] < self.mark_price_candle[4]
                         and self.a == 0):
@@ -39,14 +38,11 @@ class Bot(Okx):
                     self.a = 0
                 if pos and self.bal_quote_ccy > pos.sz and self.order is None:
                     await self.send_ticker(side='sell', sz=pos.sz + pos.fee)
+                elif pos and self.bal_quote_ccy < pos.sz and self.order is None:
+                    await self.send_ticker(side='buy', tag='completed')
                 elif (pos is False and self.a == 1 and self.mark_px >= self.y
                       and self.bal_base_ccy > self.qty and self.order is None):
-                    self.y = float(self.grid_px + (self.grid_px * self.percent / 100))
-                    await self.send_ticker(side='buy', px=self.mark_px)
-                elif (pos is False and self.a == 1 and self.mark_px >= self.y
-                      and self.bal_base_ccy < self.qty and self.order is None):
-                    self.y = float(self.grid_px + (self.grid_px * self.percent / 100))
-                    await self.send_ticker(side='buy', sz=self.sz * 2, px=self.mark_px, tag='completed')
+                    await self.send_ticker(side='buy')
                 if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
                     summ = ((float(self.order.get('avgPx')) * float(self.order.get('sz')) + float(
                         self.order.get('fee')))
