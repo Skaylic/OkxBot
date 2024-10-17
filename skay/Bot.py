@@ -42,6 +42,7 @@ class Bot(Okx):
                     await self.send_ticker(side='buy', tag='completed')
                 elif (pos is False and self.a == 1 and self.mark_px >= self.y
                       and self.bal_base_ccy > self.qty and self.order is None):
+                    self.y = self.grid_px
                     await self.send_ticker(side='buy')
                 if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
                     summ = ((float(self.order.get('avgPx')) * float(self.order.get('sz')) + float(
