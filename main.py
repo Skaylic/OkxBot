@@ -1,40 +1,30 @@
 import asyncio
-from asyncio.exceptions import CancelledError, IncompleteReadError
-from websockets.exceptions import ConnectionClosed, ConnectionClosedError
-from skay.Bot import Bot
+from time import sleep
 from dotenv import load_dotenv
 from skay.Logger import setup_logger
-from time import sleep, strftime
-from httpx import TimeoutException
-
-logger = setup_logger()
+from skay.Bot import Bot
+from websockets.exceptions import ConnectionClosedError
 
 load_dotenv()
 
+logger = setup_logger()
 
-async def start():
-    bot = Bot()
+
+def run():
     try:
-        await bot.run()
-    except (KeyboardInterrupt, CancelledError):
-        logger.info("Соединение остановлено вручную " + strftime('%Y-%m-%d %H:%M:%S'))
-    except IncompleteReadError as e:
-        logger.info("IncompleteReadError " + strftime('%Y-%m-%d %H:%M:%S'))
-        sleep(90)
-        await start()
-    except (ConnectionClosed, ConnectionClosedError) as e:
-        logger.info("ConnectionClosed " + strftime('%Y-%m-%d %H:%M:%S'))
-        sleep(90)
-        await start()
-    except TimeoutException as e:
-        logger.info("TimeoutException " + strftime('%Y-%m-%d %H:%M:%S'))
-        sleep(90)
-        await start()
-    except TimeoutError as e:
-        logger.info("TimeoutError " + strftime('%Y-%m-%d %H:%M:%S'))
-        sleep(90)
-        await start()
+        bot = Bot()
+        asyncio.run(bot.start())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен в ручную!")
+    except TimeoutError:
+        logger.error("TimeoutError")
+        sleep(60)
+        run()
+    except ConnectionClosedError:
+        logger.error("ConnectionClosedError")
+        sleep(60)
+        run()
 
 
 if __name__ == '__main__':
-    asyncio.run(start())
+    run()
