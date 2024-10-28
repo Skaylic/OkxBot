@@ -1,54 +1,54 @@
-import os
 import asyncio
-from time import strftime
 import logging
+import os
+from time import strftime
 from skay.Okx import Okx
-from skay.Database import Database
+from skay.DataBase import DataBase
 from skay.Models import Orders
 
 logger = logging.getLogger('SkayBot')
-db = Database().set_db()
+
+db = DataBase().set_db()
 
 
 class Bot(Okx):
 
     def __init__(self):
-        super().__init__()
+        super(Bot, self).__init__()
+        self.qty = float(os.getenv('QTY'))
         self.min = float(os.getenv('MIN'))
         self.max = float(os.getenv('MAX'))
         self.percent = float(os.getenv('PERCENT'))
         self.grid = []
         self.grid_px = 0.0
-        self.a = 0
-        self.y = 0
-        self.order = None
+        self.to_buy = 0.0
+        self.y = 0.0
 
     async def check(self):
         self.get_grid_position()
+        if self.instruments is None:
+            self.getInstruments()
         while True:
-            if self.mark_px:
-                self.grid_px = round(self.array_grid(self.grid, self.mark_px), 9)
+            if self.mark_price:
+                self.grid_px = round(self.array_grid(self.grid, self.mark_price), 9)
                 pos = self.is_position()
-                if (self.mark_price_candle and self.mark_price_candle[1] < self.mark_price_candle[4]
-                        and self.a == 0):
+                if (self.candle and self.candle['open'] < self.candle['close']
+                        and self.to_buy == 0):
                     self.y = self.grid_px
-                    self.a = 1
-                elif (self.mark_price_candle and self.mark_price_candle[1] > self.mark_price_candle[4]
-                      and self.a == 1):
-                    self.a = 0
-                if pos and self.bal_quote_ccy > pos.sz and self.order is None:
-                    await self.send_ticker(side='sell', sz=pos.sz + pos.fee)
-                elif pos and self.bal_quote_ccy < pos.sz and self.order is None:
-                    await self.send_ticker(side='buy', tag='completed')
-                elif (pos is False and self.a == 1 and self.mark_px >= self.y
-                      and self.bal_base_ccy > self.qty and self.order is None):
+                    self.to_buy = 1
+                elif (self.candle and self.candle['open'] > self.candle['close']
+                      and self.to_buy == 1):
+                    self.to_buy = 0
+                if pos and self.quoteBalance > pos.sz and self.order is None:
+                    self.send_ticker(sz=pos.sz + pos.fee, side='sell')
+                elif pos and self.quoteBalance < pos.sz and self.order is None:
+                    self.send_ticker(sz=self.qty, side='buy', tag='completed')
+                elif (pos is False and self.to_buy == 1 and self.mark_price >= self.y
+                      and self.baseBalance > self.qty and self.order is None):
                     self.y = self.grid_px
-                    await self.send_ticker(side='buy')
+                    self.send_ticker(sz=self.qty, side='buy')
                 if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
-                    summ = ((float(self.order.get('avgPx')) * float(self.order.get('sz')) + float(
-                        self.order.get('fee')))
-                            - (float(pos.sz) * float(pos.px)) + (float(pos.fee) * float(pos.px)))
-                    self.order.update({'profit': summ})
+                    self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
                     pos.cTime = strftime('%Y%m%d%H%M%S')
                     pos.is_active = False
@@ -56,14 +56,14 @@ class Bot(Okx):
                     logger.info(_ord)
                     self.order = None
                 elif (self.order and self.order['state'] == 'filled'
-                        and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
+                      and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
                     self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
                     logger.info(_ord)
                     self.order = None
                 elif (self.order and self.order['state'] == 'filled'
                       and self.order['side'] == 'buy' and self.order['tag'] == 'bot'):
-                    self.order['profit'] = 0.0
+                    self.order['profit'] = float(self.mark_price + (self.mark_price * self.percent / 100))
                     _ord = self.save_order(self.order, True)
                     logger.info(_ord)
                     self.order = None
@@ -71,21 +71,21 @@ class Bot(Okx):
 
     def save_order(self, order, active=True):
         _ord = Orders(
-            instType=order.get('instType'),
-            sz=order.get('sz'),
-            px=order.get('avgPx'),
-            grid_px=self.grid_px,
-            fee=order.get('fee'),
-            profit=order.get('profit'),
-            side=order.get('side'),
-            feeCcy=order.get('feeCcy'),
-            instId=order.get('instId'),
-            tgtCcy=order.get('tgtCcy'),
             ordId=order.get('ordId'),
-            state=order.get('state'),
             cTime=strftime('%Y%m%d%H%M%S'),
+            sz=order.get('fillSz'),
+            px=order.get('fillPx'),
+            grid_px=self.grid_px,
+            profit=order.get('profit'),
+            fee=order.get('fee'),
+            feeCcy=order.get('feeCcy'),
+            side=order.get('side'),
+            instId=order.get('instId'),
+            is_active=active,
+            instType=order.get('instType'),
+            state=order.get('state'),
+            tgtCcy=order.get('tgtCcy'),
             tag=order.get('tag'),
-            is_active=active
         )
         db.add(_ord)
         db.commit()
@@ -101,18 +101,16 @@ class Bot(Okx):
         return round(min([x for x in a if x > val] or [None]), 9)
 
     def is_position(self):
-        mrx = float(self.mark_px - (self.mark_px * self.percent / 100))
-        _ord = (db.query(Orders).filter(Orders.side == 'buy', Orders.px < mrx, Orders.is_active == True)
+        _ord = (db.query(Orders).filter(Orders.profit < self.mark_price, Orders.is_active == True)
                 .order_by(Orders.px).first())
         if _ord:
             return _ord
-        _ord = db.query(Orders).filter(Orders.side == 'buy', Orders.grid_px == self.grid_px,
+        _ord = db.query(Orders).filter(Orders.grid_px == self.grid_px,
                                        Orders.is_active == True).first()
         if _ord:
             return None
         else:
             return False
 
-    async def run(self):
-        logger.info('Started ' + strftime('%Y-%m-%d %H:%M:%S'))
-        await asyncio.gather(self.check(), self.ws_private(), self.ws_public(), self.ws_business())
+    async def start(self):
+        await asyncio.gather(self.ws_private(), self.ws_public(), self.ws_business(), self.check())
