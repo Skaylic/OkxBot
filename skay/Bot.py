@@ -40,13 +40,13 @@ class Bot(Okx):
                       and self.to_buy == 1):
                     self.to_buy = 0
                 if pos and self.quoteBalance > pos.sz and self.order is None:
-                    self.send_ticker(sz=pos.sz + pos.fee, side='sell')
+                    await self.send_ticker(sz=pos.sz, side='sell')
                 elif pos and self.quoteBalance < pos.sz and self.order is None:
-                    self.send_ticker(sz=self.qty, side='buy', tag='completed')
+                    await self.send_ticker(sz=self.qty, side='buy', tag='completed')
                 elif (pos is False and self.to_buy == 1 and self.mark_price >= self.y
                       and self.baseBalance > self.qty and self.order is None):
                     self.y = self.grid_px
-                    self.send_ticker(sz=self.qty, side='buy')
+                    await self.send_ticker(sz=self.qty, side='buy')
                 if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
                     self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
@@ -63,7 +63,9 @@ class Bot(Okx):
                     self.order = None
                 elif (self.order and self.order['state'] == 'filled'
                       and self.order['side'] == 'buy' and self.order['tag'] == 'bot'):
-                    self.order['profit'] = float(self.mark_price + (self.mark_price * self.percent / 100))
+                    self.order['fillSz'] = float(self.order['fillSz']) + float(self.order['fee'])
+                    self.order['profit'] = (float(self.order['fillPx']) +
+                                            (float(self.order['fillPx']) * self.percent / 100))
                     _ord = self.save_order(self.order, True)
                     logger.info(_ord)
                     self.order = None
