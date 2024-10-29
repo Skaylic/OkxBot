@@ -46,6 +46,7 @@ class Okx:
                 ev = msg.get('event')
                 arg = msg.get('arg')
                 data = msg.get('data')
+                code = msg.get('code')
             except websockets.ConnectionClosedOK:
                 break
             if ev == 'login' and msg['code'] == '0':
@@ -61,21 +62,26 @@ class Okx:
             if arg and arg['channel'] == 'mark-price' and data:
                 self.mark_price = float(data[0]['markPx'])
             elif arg and arg['channel'] == 'mark-price-candle4H' and data:
-                self.candle = {'open': data[0][1], 'close': data[0][4]}
+                self.candle = {'open': float(data[0][1]), 'close': float(data[0][4])}
             elif arg and arg['channel'] == 'balance_and_position' and data:
                 for dt in data[0]['balData']:
                     if dt['ccy'] == self.instruments['baseCcy']:
                         self.baseBalance = float(dt['cashBal'])
                     elif dt['ccy'] == self.instruments['quoteCcy']:
                         self.quoteBalance = float(dt['cashBal'])
-            elif 'op' in msg and msg['op'] == 'order':
+            elif 'op' in msg and msg['op'] == 'order' and data:
                 if int(data[0]['sCode']) == 0:
-                    self.orderId = data[0]['ordId']
+                    self.orderId = int(data[0]['ordId'])
                 elif int(data[0]['sCode']) != 0:
                     logger.error(f'Error: {data[0]['sCode']} {data[0]["sMsg"]}')
             elif arg and arg['channel'] == 'orders' and data:
                 if data[0]['state'] == 'filled':
                     self.order = data[0]
+            elif code:
+                self.logger.error(f'Error: {code} {msg['msg']}')
+                exit(code)
+            else:
+                print(msg)
 
     def sign(self, key: str, secret: str, passphrase: str):
         ts = str(int(datetime.now().timestamp()))
@@ -112,10 +118,10 @@ class Okx:
             await self.send(self.ws_2, 'subscribe', [{'channel': 'mark-price', 'instId': self.symbol}])
             await self.callbackMessage(self.ws_2)
 
-    def send_ticker(self, sz, side='buy', tag=''):
+    async def send_ticker(self, sz, side='buy', tag=''):
         if not tag:
             tag = 'bot'
-        self.send(self.ws_2, "order",
+        await self.send(self.ws, "order",
                   [{"instId": self.symbol,
                     "tdMode": "cash",
                     "ordType": "market",

@@ -24,10 +24,10 @@ class Bot(Okx):
 
     async def check(self):
         self.logger.info("Bot is running!")
-        self.get_grid_position()
         if self.instruments is None:
             self.getInstruments()
             self.save_instruments(self.instruments)
+        self.get_grid_position()
         while True:
             if self.mark_price:
                 self.grid_px = round(self.array_grid(self.grid, self.mark_price), 9)
@@ -59,7 +59,7 @@ class Bot(Okx):
                       and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
                     self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
-                    logger.info(_ord)
+                    self.logger.info(_ord)
                     self.order = None
                 elif (self.order and self.order['state'] == 'filled'
                       and self.order['side'] == 'buy' and self.order['tag'] == 'bot'):
@@ -70,7 +70,6 @@ class Bot(Okx):
                     self.logger.info(_ord)
                     self.order = None
             await asyncio.sleep(1)
-
 
     def save_instruments(self, instr):
         _inst = db.query(Instruments.instId == self.symbol).first()
@@ -90,7 +89,6 @@ class Bot(Okx):
             db.add(_inst)
             db.commit()
             return _inst
-
 
     def save_order(self, order, active=True):
         _ord = Orders(
