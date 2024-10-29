@@ -4,7 +4,7 @@ import os
 from time import strftime
 from skay.Okx import Okx
 from skay.DataBase import DataBase
-from skay.Models import Orders
+from skay.Models import Instruments, Orders
 
 logger = logging.getLogger(os.getenv("BOT_NAME"))
 
@@ -28,7 +28,11 @@ class Bot(Okx):
         self.get_grid_position()
         if self.instruments is None:
             self.getInstruments()
-            print(self.instruments)
+            inst = Instruments(
+                self.instruments,
+            )
+            db.add(inst)
+            db.commit()
         while True:
             if self.mark_price:
                 self.grid_px = round(self.array_grid(self.grid, self.mark_price), 9)
