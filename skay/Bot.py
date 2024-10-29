@@ -39,12 +39,12 @@ class Bot(Okx):
                 elif (self.candle and self.candle['open'] > self.candle['close']
                       and self.to_buy == 1):
                     self.to_buy = 0
-                if pos and self.quoteBalance > pos.sz and self.order is None:
+                if pos and self.baseBalance > pos.sz and self.order is None:
                     await self.send_ticker(sz=pos.sz, side='sell')
-                elif pos and self.quoteBalance < pos.sz and self.order is None:
+                elif pos and self.baseBalance < pos.sz and self.order is None:
                     await self.send_ticker(sz=self.qty, side='buy', tag='completed')
                 elif (pos is False and self.to_buy == 1 and self.mark_price >= self.y
-                      and self.baseBalance > self.qty and self.order is None):
+                      and self.quoteBalance > self.qty and self.order is None):
                     self.y = self.grid_px
                     await self.send_ticker(sz=self.qty, side='buy')
                 if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
@@ -134,4 +134,4 @@ class Bot(Okx):
             return False
 
     async def start(self):
-        await asyncio.gather(self.ws_private(), self.ws_public(), self.ws_business(), self.check())
+        await asyncio.gather(self.check(), self.ws_public(), self.ws_business(), self.ws_private())
