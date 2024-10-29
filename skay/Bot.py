@@ -6,7 +6,7 @@ from skay.Okx import Okx
 from skay.DataBase import DataBase
 from skay.Models import Orders
 
-logger = logging.getLogger('SkayBot')
+logger = logging.getLogger(os.getenv("BOT_NAME"))
 
 db = DataBase().set_db()
 

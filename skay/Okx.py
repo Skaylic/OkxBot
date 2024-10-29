@@ -12,7 +12,7 @@ import requests
 # wss://wsaws.okx.com:8443/ws/v5/private
 # wss://wsaws.okx.com:8443/ws/v5/business
 
-logger = logging.getLogger('SkayBot')
+logger = logging.getLogger(os.getenv("BOT_NAME"))
 
 
 class Okx:

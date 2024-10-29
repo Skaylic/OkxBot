@@ -1,3 +1,4 @@
+import os
 import logging
 
 
@@ -15,7 +16,7 @@ def setup_logger():
         encoding='utf-8'
     )
     cons = logging.StreamHandler()
-    logger = logging.getLogger('SkayBot')
+    logger = logging.getLogger(os.getenv("BOT_NAME"))
     logger.setLevel(logging.DEBUG)
     logger.addHandler(cons)
     return logger
