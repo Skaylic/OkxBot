@@ -28,6 +28,7 @@ class Bot(Okx):
         self.get_grid_position()
         if self.instruments is None:
             self.getInstruments()
+            print(self.instruments)
         while True:
             if self.mark_price:
                 self.grid_px = round(self.array_grid(self.grid, self.mark_price), 9)
