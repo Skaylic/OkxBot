@@ -1,4 +1,5 @@
 import asyncio
+import os
 from time import sleep
 from dotenv import load_dotenv
 from skay.Logger import setup_logger
@@ -6,8 +7,7 @@ from skay.Bot import Bot
 from websockets.exceptions import ConnectionClosedError
 
 load_dotenv()
-
-logger = setup_logger()
+logger = setup_logger(os.getenv('BOT_NAME'))
 
 
 def run():

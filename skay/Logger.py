@@ -2,7 +2,7 @@ import os
 import logging
 
 
-def setup_logger():
+def setup_logger(bot_name: str):
     """
     Использую logging
     чтобы при деплое легко переключить сохранение логов в файл
@@ -16,7 +16,7 @@ def setup_logger():
         encoding='utf-8'
     )
     cons = logging.StreamHandler()
-    logger = logging.getLogger(os.getenv("BOT_NAME"))
+    logger = logging.getLogger(bot_name)
     logger.setLevel(logging.DEBUG)
     logger.addHandler(cons)
     return logger

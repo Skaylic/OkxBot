@@ -18,6 +18,8 @@ logger = logging.getLogger(os.getenv("BOT_NAME"))
 class Okx:
 
     def __init__(self):
+        self.logger = logging.getLogger(os.getenv("BOT_NAME"))
+        self.logger.info("Bot is started!")
         self.api_key = os.getenv('API_KEY')
         self.api_secret = os.getenv('API_SECRET')
         self.passphrase = os.getenv('PASSPHRASE')
@@ -47,31 +49,31 @@ class Okx:
             except websockets.ConnectionClosedOK:
                 break
             if ev == 'login' and msg['code'] == '0':
-                logger.info(f"Login in!")
+                self.logger.info(f"Login in!")
                 return 'login'
-            if ev == 'subscribe':
-                logger.info(f"{ev.title()}: {arg['channel']}")
-            if ev == 'error':
-                logger.error(f"{msg['code']}: {msg['msg']}")
+            elif ev == 'subscribe':
+                self.logger.info(f"{ev.title()}: {arg['channel']}")
+            elif ev == 'error':
+                self.logger.error(f"{msg['code']}: {msg['msg']}")
                 exit(msg['code'])
+            elif ev == 'channel-conn-count':
+                self.logger.info(f"{msg['channel'].title()} connCount: {msg['connCount']}")
             if arg and arg['channel'] == 'mark-price' and data:
                 self.mark_price = float(data[0]['markPx'])
-            if arg and arg['channel'] == 'instruments' and data:
-                print(data)
-            if arg and arg['channel'] == 'mark-price-candle4H' and data:
+            elif arg and arg['channel'] == 'mark-price-candle4H' and data:
                 self.candle = {'open': data[0][1], 'close': data[0][4]}
-            if arg and arg['channel'] == 'account' and data:
-                for dt in data[0]['details']:
-                    if dt['ccy'] == 'ICP':
+            elif arg and arg['channel'] == 'balance_and_position' and data:
+                for dt in data[0]['balData']:
+                    if dt['ccy'] == self.instruments['baseCcy']:
                         self.baseBalance = float(dt['cashBal'])
-                    elif dt['ccy'] == 'USDT':
+                    elif dt['ccy'] == self.instruments['quoteCcy']:
                         self.quoteBalance = float(dt['cashBal'])
-            if 'op' in msg and msg['op'] == 'order':
+            elif 'op' in msg and msg['op'] == 'order':
                 if int(data[0]['sCode']) == 0:
                     self.orderId = data[0]['ordId']
                 elif int(data[0]['sCode']) != 0:
                     logger.error(f'Error: {data[0]['sCode']} {data[0]["sMsg"]}')
-            if arg and arg['channel'] == 'orders' and data:
+            elif arg and arg['channel'] == 'orders' and data:
                 if data[0]['state'] == 'filled':
                     self.order = data[0]
 
@@ -91,7 +93,7 @@ class Okx:
             await self.send(self.ws, 'login', [login_args])
             r = await self.callbackMessage(self.ws)
             if r == 'login':
-                await self.send(self.ws, 'subscribe', [{'channel': 'account'}])
+                await self.send(self.ws, 'subscribe', [{'channel': 'balance_and_position'}])
                 await self.send(self.ws, 'subscribe',
                                 [{'channel': 'orders', 'instType': 'SPOT', 'instId': self.symbol}])
                 await self.callbackMessage(self.ws)
@@ -108,7 +110,6 @@ class Okx:
 
         async with websockets.connect(url) as self.ws_2:
             await self.send(self.ws_2, 'subscribe', [{'channel': 'mark-price', 'instId': self.symbol}])
-            await self.send(self.ws_2, 'subscribe', [{'channel': 'instruments', 'instType': 'SPOT'}])
             await self.callbackMessage(self.ws_2)
 
     def send_ticker(self, sz, side='buy', tag=''):

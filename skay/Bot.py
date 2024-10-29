@@ -6,8 +6,6 @@ from skay.Okx import Okx
 from skay.DataBase import DataBase
 from skay.Models import Instruments, Orders
 
-logger = logging.getLogger(os.getenv("BOT_NAME"))
-
 db = DataBase().set_db()
 
 
@@ -25,6 +23,7 @@ class Bot(Okx):
         self.y = 0.0
 
     async def check(self):
+        self.logger.info("Bot is running!")
         self.get_grid_position()
         if self.instruments is None:
             self.getInstruments()
@@ -54,7 +53,7 @@ class Bot(Okx):
                     pos.cTime = strftime('%Y%m%d%H%M%S')
                     pos.is_active = False
                     db.commit()
-                    logger.info(_ord)
+                    self.logger.info(_ord)
                     self.order = None
                 elif (self.order and self.order['state'] == 'filled'
                       and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
@@ -68,24 +67,29 @@ class Bot(Okx):
                     self.order['profit'] = (float(self.order['fillPx']) +
                                             (float(self.order['fillPx']) * self.percent / 100))
                     _ord = self.save_order(self.order, True)
-                    logger.info(_ord)
+                    self.logger.info(_ord)
                     self.order = None
             await asyncio.sleep(1)
 
 
     def save_instruments(self, instr):
-        _inst = Instruments(
-            instId=instr.get('instId'),
-            instType=instr.get('instType'),
-            minSz=float(instr.get('minSz')),
-            lotSz=float(instr.get('lotSz')),
-            baseCcy=instr.get('baseCcy'),
-            quoteCcy=instr.get('quoteCcy'),
-            state=instr.get('state'),
-        )
-        db.add(_inst)
-        db.commit()
-        return _inst
+        _inst = db.query(Instruments.instId == self.symbol).first()
+        if _inst:
+            _inst = instr
+            db.commit()
+        else:
+            _inst = Instruments(
+                instId=instr.get('instId'),
+                instType=instr.get('instType'),
+                minSz=float(instr.get('minSz')),
+                lotSz=float(instr.get('lotSz')),
+                baseCcy=instr.get('baseCcy'),
+                quoteCcy=instr.get('quoteCcy'),
+                state=instr.get('state'),
+            )
+            db.add(_inst)
+            db.commit()
+            return _inst
 
 
     def save_order(self, order, active=True):
