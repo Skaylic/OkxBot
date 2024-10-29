@@ -28,11 +28,7 @@ class Bot(Okx):
         self.get_grid_position()
         if self.instruments is None:
             self.getInstruments()
-            inst = Instruments(
-                self.instruments,
-            )
-            db.add(inst)
-            db.commit()
+            self.save_instruments(self.instruments)
         while True:
             if self.mark_price:
                 self.grid_px = round(self.array_grid(self.grid, self.mark_price), 9)
@@ -75,6 +71,22 @@ class Bot(Okx):
                     logger.info(_ord)
                     self.order = None
             await asyncio.sleep(1)
+
+
+    def save_instruments(self, instr):
+        _inst = Instruments(
+            instId=instr.get('instId'),
+            instType=instr.get('instType'),
+            minSz=float(instr.get('minSz')),
+            lotSz=float(instr.get('lotSz')),
+            baseCcy=instr.get('baseCcy'),
+            quoteCcy=instr.get('quoteCcy'),
+            state=instr.get('state'),
+        )
+        db.add(_inst)
+        db.commit()
+        return _inst
+
 
     def save_order(self, order, active=True):
         _ord = Orders(

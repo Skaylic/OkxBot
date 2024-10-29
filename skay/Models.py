@@ -19,7 +19,8 @@ class Base(DeclarativeBase):
     def to_dict(self) -> Dict[str, Any]:
         """Serializes only column data."""
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-    
+
+
 class Instruments(Base):
     __tablename__ = 'instruments'
     id = Column(Integer, primary_key=True)
@@ -30,6 +31,9 @@ class Instruments(Base):
     baseCcy = Column(String)
     quoteCcy = Column(String)
     state = Column(String)
+
+    def __repr__(self) -> str:
+        return f"instId: {self.instId!r} MinSz: {self.minSz!r} State: {self.state!r}"
 
 
 class Orders(Base):
