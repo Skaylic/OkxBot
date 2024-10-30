@@ -77,10 +77,11 @@ class Okx:
             elif arg and arg['channel'] == 'orders' and data:
                 if data[0]['state'] == 'filled':
                     self.order = data[0]
+                    print(self.order)
             elif code:
                 self.logger.error(f'Error: {code} {msg['msg']}')
                 exit(code)
-            else:
+            elif ev != 'subscribe' and ev != 'channel-conn-count':
                 print(msg)
 
     def sign(self, key: str, secret: str, passphrase: str):
@@ -92,7 +93,7 @@ class Okx:
         return args
 
     async def ws_private(self):
-        url = 'wss://ws.okx.com/ws/v5/private'
+        url = 'wss://wsaws.okx.com/ws/v5/private'
 
         async with websockets.connect(url) as self.ws:
             login_args: dict = self.sign(self.api_key, self.api_secret, self.passphrase)
@@ -105,20 +106,23 @@ class Okx:
                 await self.callbackMessage(self.ws)
 
     async def ws_business(self):
-        url = 'wss://ws.okx.com/ws/v5/business'
+        url = 'wss://wsaws.okx.com/ws/v5/business'
 
         async with websockets.connect(url) as self.ws_1:
             await self.send(self.ws_1, 'subscribe', [{'channel': 'mark-price-candle4H', 'instId': self.symbol}])
             await self.callbackMessage(self.ws_1)
 
     async def ws_public(self):
-        url = 'wss://ws.okx.com/ws/v5/public'
+        url = 'wss://wsaws.okx.com/ws/v5/public'
 
         async with websockets.connect(url) as self.ws_2:
             await self.send(self.ws_2, 'subscribe', [{'channel': 'mark-price', 'instId': self.symbol}])
             await self.callbackMessage(self.ws_2)
 
     async def send_ticker(self, sz, side='buy', tag=''):
+        tgtCcy = 'base_ccy'
+        if side == "sell":
+            tgtCcy = 'quote_ccy'
         if not tag:
             tag = 'bot'
         await self.send(self.ws, "order",
@@ -128,7 +132,7 @@ class Okx:
                     "sz": sz,
                     "px": self.mark_price,
                     "side": side,
-                    "tgtCcy": 'base_ccy',
+                    "tgtCcy": tgtCcy,
                     'tag': tag}],
                   strftime("%Y%m%d%H%M%S"))
 
