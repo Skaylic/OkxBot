@@ -43,7 +43,7 @@ class Bot(Okx):
                 if pos and self.baseBalance > pos.sz and self.order is None:
                     await self.send_ticker(sz=pos.sz, side='sell')
                 elif pos and self.baseBalance < pos.sz and self.order is None:
-                    await self.send_ticker(sz=self.qty / self.candle['close'], side='buy', tag='completed')
+                    await self.send_ticker(sz=self.qty * 2 / self.candle['close'], side='buy', tag='completed')
                 elif (pos is False and self.to_buy == 1 and self.mark_price >= self.y
                       and self.quoteBalance > self.qty and self.order is None):
                     self.y = self.grid_px

@@ -4,33 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="faa064fa-4fdb-4909-8c4c-1c748c8fae2a" name="Changes" comment="Занрузка на гитхаб">
-      <changelist_data name="Skaylic" email="" />
-      <change afterPath="$PROJECT_DIR$/.dotenv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/e41e54bc-1831-4c75-8635-0e8ec6d90aa6.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/e41e54bc-1831-4c75-8635-0e8ec6d90aa6/storage_v2/_src_/schema/main.uQUzAA.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes1/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes2.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Changes2/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/Bot.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/Database.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/Logger.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/Models.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/Okx.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/skay/__init__.py" afterDir="false" />
-    </list>
+    <list default="true" id="faa064fa-4fdb-4909-8c4c-1c748c8fae2a" name="Changes" comment="Updating files" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -73,30 +47,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Notification.DisplayName-DoNotAsk-WindowsDefender": "Microsoft Defender configuration",
-    "Notification.DoNotAsk-WindowsDefender": "true",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/PathonProjects/OkxBot/README.md",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
-    "two.files.diff.last.used.file": "D:/PathonProjects/OkxBot/README.md",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Notification.DisplayName-DoNotAsk-WindowsDefender&quot;: &quot;Microsoft Defender configuration&quot;,
+    &quot;Notification.DoNotAsk-WindowsDefender&quot;: &quot;true&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/PathonProjects/OkxBot/README.md&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;two.files.diff.last.used.file&quot;: &quot;D:/PathonProjects/OkxBot/README.md&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "directory"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <option name="ENV_FILES" value="$PROJECT_DIR$/.env" />
@@ -152,7 +126,81 @@
       <workItem from="1728651971735" duration="3344000" />
       <workItem from="1728655360534" duration="1006000" />
       <workItem from="1729136565174" duration="2582000" />
+      <workItem from="1730182913065" duration="22596000" />
     </task>
+    <task id="LOCAL-00001" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730183189980</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1730183189980</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730183433061</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1730183433061</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730183566071</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1730183566071</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730184405522</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1730184405522</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730184941346</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1730184941346</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730189967625</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1730189967625</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730219528639</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1730219528639</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730220158974</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1730220158974</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Updating files">
+      <option name="closed" value="true" />
+      <created>1730246461573</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1730246461573</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -171,6 +219,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Занрузка на гитхаб" />
-    <option name="LAST_COMMIT_MESSAGE" value="Занрузка на гитхаб" />
+    <MESSAGE value="Updating files" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updating files" />
   </component>
 </project>

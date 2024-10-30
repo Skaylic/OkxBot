@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="db" uuid="e41e54bc-1831-4c75-8635-0e8ec6d90aa6">
+    <data-source source="LOCAL" name="db" uuid="cde200d1-0ef9-4276-81df-5c25eb7fc916">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:D:\PathonProjects\OkxBot\db.sqlite</jdbc-url>
+      <jdbc-url>jdbc:sqlite:D:\MyPythonProjects\WsOkxBot\db.sqlite</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>
