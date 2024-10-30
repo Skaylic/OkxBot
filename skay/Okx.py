@@ -121,8 +121,6 @@ class Okx:
 
     async def send_ticker(self, sz, side='buy', tag=''):
         tgtCcy = 'base_ccy'
-        if side == "sell":
-            tgtCcy = 'quote_ccy'
         if not tag:
             tag = 'bot'
         await self.send(self.ws, "order",
