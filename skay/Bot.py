@@ -41,14 +41,25 @@ class Bot(Okx):
                       and self.to_buy == 1):
                     self.to_buy = 0
                 if pos and self.baseBalance > pos.sz and self.order is None:
+                    self.y = self.mark_price
                     await self.send_ticker(sz=pos.sz, side='sell')
                 elif pos and self.baseBalance < pos.sz and self.order is None:
-                    await self.send_ticker(sz=self.qty * 2 / self.candle['close'], side='buy', tag='completed')
+                    self.logger.error("Нужно купить манеты!")
+                    exit()
+                    # _sum = 0
+                    # res = db.query(Orders).filter(Orders.is_active == True).all()
+                    # for _ord in res:
+                    #     _sum += _ord.sz
+                    # if self.quoteBalance > _sum * self.candle['close']:
+                    #     await self.send_ticker(sz=_sum * self.candle['close'], side='buy', tag='completed')
+                    # else:
+                    #     await self.send_ticker(sz=pos.sz * self.candle['close'], side='buy', tag='completed')
                 elif (pos is False and self.to_buy == 1 and self.mark_price >= self.y
                       and self.quoteBalance > self.qty and self.order is None):
                     self.y = self.grid_px
                     await self.send_ticker(sz=self.qty / self.candle['close'], side='buy')
-                if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell':
+                if pos and self.order and self.order['state'] == 'filled' and self.order['side'] == 'sell'\
+                        and self.order['tag'] == 'bot':
                     self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
                     pos.cTime = strftime('%Y%m%d%H%M%S')
@@ -56,15 +67,15 @@ class Bot(Okx):
                     db.commit()
                     self.logger.info(_ord)
                     self.order = None
-                elif (self.order and self.order['state'] == 'filled'
-                      and self.order['side'] == 'buy' and self.order['tag'] == 'completed'):
+                elif self.order and self.order['state'] == 'filled' and self.order['side'] == 'buy'\
+                        and self.order['tag'] == 'completed':
                     self.order['sz'] = float(self.order['sz']) + float(self.order['fee'])
                     self.order['profit'] = 0.0
                     _ord = self.save_order(self.order, False)
                     self.logger.info(_ord)
                     self.order = None
-                elif (self.order and self.order['state'] == 'filled'
-                      and self.order['side'] == 'buy' and self.order['tag'] == 'bot'):
+                elif self.order and self.order['state'] == 'filled' and self.order['side'] == 'buy'\
+                        and self.order['tag'] == 'bot':
                     self.order['sz'] = float(self.order['sz']) + float(self.order['fee'])
                     self.order['profit'] = (float(self.order['avgPx']) +
                                             (float(self.order['avgPx']) * self.percent / 100))
@@ -136,13 +147,12 @@ class Bot(Okx):
             return False
 
     def check_qty(self):
-        if self.quoteBalance < 200:
+        if self.quoteBalance < 500:
             self.qty = float(os.getenv("QTY")) / 2
-        elif 200 < self.quoteBalance < 500:
+        elif 500 < self.quoteBalance < 1000:
             self.qty = float(os.getenv("QTY"))
-        elif self.quoteBalance > 500:
+        elif self.quoteBalance > 1000:
             self.qty = float(os.getenv("QTY")) * 2
-
 
     async def start(self):
         await asyncio.gather(self.check(), self.ws_public(), self.ws_business(), self.ws_private())
