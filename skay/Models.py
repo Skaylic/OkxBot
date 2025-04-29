@@ -1,8 +1,7 @@
 from typing import Dict, Any
-from sqlalchemy import Column, String, Integer, Float, Boolean
+from sqlalchemy import Column, String, Integer, Float, Boolean, Table
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy import Table
 
 
 class Base(DeclarativeBase):
@@ -17,40 +16,32 @@ class Base(DeclarativeBase):
         """Serializes only column data."""
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-
-class Instruments(Base):
-    __tablename__ = 'instruments'
-    id = Column(Integer, primary_key=True)
-    instId = Column(String, unique=True)
-    instType = Column(String)
-    minSz = Column(Float)
-    lotSz = Column(Float)
-    baseCcy = Column(String)
-    quoteCcy = Column(String)
-    state = Column(String)
-
-    def __repr__(self) -> str:
-        return f"instId: {self.instId!r} MinSz: {self.minSz!r} State: {self.state!r}"
-
-
 class Orders(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
-    ordId = Column(Integer)
-    cTime = Column(String)
-    sz = Column(Float)
-    px = Column(Float)
+    sz = Column(Float, default=0.0)
+    px = Column(Float, default=0.0)
     profit = Column(Float, default=0.0)
+    grid_px = Column(Float, default=0.0)
+    fee = Column(Float, default=0.0)
     side = Column(String)
     is_active = Column(Boolean, default=True)
+    symbol = Column(String)
     tag = Column(String)
-    state = Column(String)
-    grid_px = Column(Float, default=0.0)
-    fee = Column(Float)
-    feeCcy = Column(String)
-    instType = Column(String)
-    instId = Column(String)
-    tgtCcy = Column(String)
+    ordId = Column(Integer)
+    tdMode = Column(String)
 
     def __repr__(self) -> str:
-        return f"Side: {self.side!r} Px: {self.px!r} Sz: {self.sz!r} Active: {self.is_active!r}"
+        return f"Side: {self.side!r} Id: {self.ordId!r} Px: {self.px!r} Sz: {self.sz!r} Active: {self.is_active!r}"
+
+class Profit(Base):
+    __tablename__ = "profit"
+    id = Column(Integer, primary_key=True)
+    cTime = Column(Integer, default=0)
+    ord_buy = Column(Float, default=0.0)
+    usdt_bal = Column(Float, default=0.0)
+    total = Column(Float, default=0.0)
+    profit = Column(Float, default=0.0)
+
+    def __repr__(self) -> str:
+        return f"Total: {self.total!r}"
