@@ -1,140 +1,119 @@
-import os
-import websockets
 import json
-import hmac
-import base64
-import logging
+import os
+import re
+import sys
 from time import strftime
-from datetime import datetime
+
 import requests
+import logging
+from okx.websocket.WsPublicAsync import WsPublicAsync
+from okx.websocket.WsPrivateAsync import WsPrivateAsync
+from okx.Trade import TradeAPI
 
-# wss://wsaws.okx.com:8443/ws/v5/public
-# wss://wsaws.okx.com:8443/ws/v5/private
-# wss://wsaws.okx.com:8443/ws/v5/business
-
-logger = logging.getLogger(os.getenv("BOT_NAME"))
-
-
-class Okx:
+class OkxBot():
 
     def __init__(self):
         self.logger = logging.getLogger(os.getenv("BOT_NAME"))
-        self.logger.info("Bot is started!")
-        self.api_key = os.getenv('API_KEY')
-        self.api_secret = os.getenv('API_SECRET')
-        self.passphrase = os.getenv('PASSPHRASE')
-        self.symbol = os.getenv('SYMBOL')
-        self.candle = {}
-        self.mark_price = 0.0
-        self.baseBalance = 0.0
-        self.quoteBalance = 0.0
+        self.logger.debug(f"{os.getenv("BOT_NAME")} init...")
+        self.apiKey = os.getenv('API_KEY')
+        self.secretKey = os.getenv("SECRET_KEY")
+        self.passphrase = os.getenv("PASSPHRASE")
+        self.symbol = os.getenv("SYMBOL")
+        self.interval = f'candle{os.getenv("INTERVAL")}'
         self.instruments = None
+        self.klines = {}
+        self.quoteBalance = 0
+        self.baseBalance = 0
         self.orderId = None
         self.order = None
 
-    async def send(self, ws, op: str, args: list, ids=''):
-        if not ids:
-            subs = dict(op=op, args=args)
+    def msgCallback(self, message):
+        msg = json.loads(message)
+        ev = msg.get('event')
+        arg = msg.get('arg')
+        data = msg.get('data')
+        if ev == 'error':
+            print(f"Error: {msg}")
+        elif ev == 'login':
+            self.logger.info("Bot is logged in")
+        elif ev == 'subscribe':
+            self.logger.info(f"Subscribed: {arg.get('channel').title()}")
+        elif ev == 'channel-conn-count' and int(msg.get('connCount')) > 20:
+            self.logger.debug("Channel conn count > 20")
+            exit()
+        elif data and arg.get('channel') == 'instruments':
+            if data[0]['instId'] == self.symbol:
+                print("Instrument: ", data[0])
+                self.instruments = data[0]
+        elif data and arg.get('channel') == self.interval:
+            self.klines = {'open': float(data[0][1]), 'close': float(data[0][4])}
+        elif data and arg.get('channel') == 'account':
+            for k, i in enumerate(data[0]['details']):
+                if i['ccy'] == self.symbol.split('-')[0]:
+                    self.baseBalance = float(i['eq'])
+                elif i['ccy'] == self.symbol.split('-')[1]:
+                    self.quoteBalance = float(i['eq'])
+        elif arg and arg['channel'] == 'orders' and data:
+            if data[0]['state'] == 'filled' and data[0]['tag'] == 'bot':
+                self.order = data[0]
+
+    async def public(self):
+        url = "wss://ws.okx.com:8443/ws/v5/public"
+        ws = WsPublicAsync(url=url)
+        await ws.start()
+        args = []
+        arg1 = {"channel": "instruments", "instType": "SPOT", "instId": self.symbol}
+        args.append(arg1)
+        await ws.subscribe(args, callback=self.msgCallback)
+
+    async def business(self):
+        url = "wss://ws.okx.com:8443/ws/v5/business"
+        ws = WsPublicAsync(url=url)
+        await ws.start()
+        args = []
+        arg1 = {"channel": self.interval, "instId": self.symbol}
+        args.append(arg1)
+        await ws.subscribe(args, callback=self.msgCallback)
+
+    async def private(self):
+        url = "wss://ws.okx.com:8443/ws/v5/private"
+        ws = WsPrivateAsync(
+            apiKey=os.getenv("API_KEY"),
+            secretKey=os.getenv("SECRET_KEY"),
+            passphrase=os.getenv("PASSPHRASE"),
+            url=url,
+            useServerTime=False
+        )
+        await ws.start()
+        args = []
+        arg1 = {"channel": "account"}
+        arg2 = {
+            "channel": "orders",
+            "instType": "SPOT",
+            "instId": self.symbol
+        }
+        args.append(arg1)
+        args.append(arg2)
+        await ws.subscribe(args, callback=self.msgCallback)
+
+    def sendTicker(self, sz, side='buy', tag='bot'):
+        tradeAPI = TradeAPI(self.apiKey, self.secretKey, self.passphrase, False, "0")
+        result = tradeAPI.place_order(
+            instId = self.symbol,
+            tdMode = 'cash',
+            ordType = "market",
+            sz = sz,
+            px = self.klines['close'],
+            side = side,
+            tgtCcy = 'base_ccy',
+            tag = tag,
+        )
+        if result['code'] == '0':
+            result['data'][0]['ordId'] = self.orderId
         else:
-            subs = dict(id=ids, op=op, args=args)
-        await ws.send(json.dumps(subs))
-
-    async def callbackMessage(self, ws):
-        while True:
-            try:
-                msg = json.loads(await ws.recv())
-                ev = msg.get('event')
-                arg = msg.get('arg')
-                data = msg.get('data')
-                code = msg.get('code')
-            except websockets.ConnectionClosedOK:
-                break
-            if ev == 'login' and msg['code'] == '0':
-                self.logger.info(f"Login in!")
-                return 'login'
-            elif ev == 'subscribe':
-                self.logger.info(f"{ev.title()}: {arg['channel']}")
-            elif ev == 'error':
-                self.logger.error(f"{msg['code']}: {msg['msg']}")
-                exit(msg['code'])
-            elif ev == 'channel-conn-count':
-                self.logger.info(f"{msg['channel'].title()} connCount: {msg['connCount']}")
-            if arg and arg['channel'] == 'mark-price' and data:
-                self.mark_price = float(data[0]['markPx'])
-            elif arg and arg['channel'] == 'mark-price-candle4H' and data:
-                self.candle = {'open': float(data[0][1]), 'close': float(data[0][4])}
-            elif arg and arg['channel'] == 'balance_and_position' and data:
-                for dt in data[0]['balData']:
-                    if dt['ccy'] == self.instruments['baseCcy']:
-                        self.baseBalance = float(dt['cashBal'])
-                    elif dt['ccy'] == self.instruments['quoteCcy']:
-                        self.quoteBalance = float(dt['cashBal'])
-            elif 'op' in msg and msg['op'] == 'order' and data:
-                if int(data[0]['sCode']) == 0:
-                    self.orderId = int(data[0]['ordId'])
-                elif int(data[0]['sCode']) != 0:
-                    logger.error(f'Error: {data[0]['sCode']} {data[0]["sMsg"]}')
-            elif arg and arg['channel'] == 'orders' and data:
-                if data[0]['state'] == 'filled':
-                    self.order = data[0]
-                    print(self.order)
-            elif code:
-                self.logger.error(f'Error: {code} {msg['msg']}')
-                exit(code)
-            elif ev != 'subscribe' and ev != 'channel-conn-count':
-                print(msg)
-
-    def sign(self, key: str, secret: str, passphrase: str):
-        ts = str(int(datetime.now().timestamp()))
-        args = dict(apiKey=key, passphrase=passphrase, timestamp=ts)
-        sign = ts + 'GET' + '/users/self/verify'
-        mac = hmac.new(bytes(secret, encoding='utf8'), bytes(sign, encoding='utf-8'), digestmod='sha256')
-        args['sign'] = base64.b64encode(mac.digest()).decode(encoding='utf-8')
-        return args
-
-    async def ws_private(self):
-        url = 'wss://wsaws.okx.com/ws/v5/private'
-
-        async with websockets.connect(url) as self.ws:
-            login_args: dict = self.sign(self.api_key, self.api_secret, self.passphrase)
-            await self.send(self.ws, 'login', [login_args])
-            r = await self.callbackMessage(self.ws)
-            if r == 'login':
-                await self.send(self.ws, 'subscribe', [{'channel': 'balance_and_position'}])
-                await self.send(self.ws, 'subscribe',
-                                [{'channel': 'orders', 'instType': 'SPOT', 'instId': self.symbol}])
-                await self.callbackMessage(self.ws)
-
-    async def ws_business(self):
-        url = 'wss://wsaws.okx.com/ws/v5/business'
-
-        async with websockets.connect(url) as self.ws_1:
-            await self.send(self.ws_1, 'subscribe', [{'channel': 'mark-price-candle4H', 'instId': self.symbol}])
-            await self.callbackMessage(self.ws_1)
-
-    async def ws_public(self):
-        url = 'wss://wsaws.okx.com/ws/v5/public'
-
-        async with websockets.connect(url) as self.ws_2:
-            await self.send(self.ws_2, 'subscribe', [{'channel': 'mark-price', 'instId': self.symbol}])
-            await self.callbackMessage(self.ws_2)
-
-    async def send_ticker(self, sz, side='buy', tag=''):
-        tgtCcy = 'base_ccy'
-        # if side == "sell":
-        #     tgtCcy = 'quote_ccy'
-        if not tag:
-            tag = 'bot'
-        await self.send(self.ws, "order",
-                  [{"instId": self.symbol,
-                    "tdMode": "cash",
-                    "ordType": "market",
-                    "sz": sz,
-                    "px": self.mark_price,
-                    "side": side,
-                    "tgtCcy": tgtCcy,
-                    'tag': tag}],
-                  strftime("%Y%m%d%H%M%S"))
+            self.logger.error(result)
+            sys.exit(1)
+        return result
 
     def getInstruments(self):
         res = requests.get(f'https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId={self.symbol}')
