@@ -39,19 +39,13 @@ class Bot(OkxBot):
                   and self.to_buy == 1):
                 self.to_buy = 0
             if pos and self.order is None and self.baseBalance >= pos.sz:
-                print(pos)
-                print("Sell")
                 self.sendTicker(sz=pos.sz, side='sell')
                 self.y = self.klines['close']
             elif pos and self.order is None and self.baseBalance < pos.sz:
-                print(pos)
-                print("Buy 2")
                 self.logger.debug(f'Не достаточно {self.instruments['baseCcy']} на балансе!')
                 self.sendTicker(sz=pos.sz * 2, side='buy', tag='replenishment')
             elif (pos is False and self.order is None and self.to_buy == 1 and self.klines['close'] >= self.y
                   and self.quoteBalance > self.qty):
-                print(pos)
-                print("Buy 1")
                 self.y = self.grid_px
                 self.sendTicker(sz=self.qty / self.klines['close'], side='buy')
             if self.order and self.order.get('state') == 'filled' and self.order.get('side') == 'sell':
