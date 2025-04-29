@@ -1,30 +1,27 @@
 import asyncio
 import os
-from time import sleep
+import sys
+import traceback
+
 from dotenv import load_dotenv
-from skay.Logger import setup_logger
 from skay.Bot import Bot
-from websockets.exceptions import ConnectionClosedError
+from skay.Logger import setup_logger
 
 load_dotenv()
 logger = setup_logger(os.getenv('BOT_NAME'))
 
-
-def run():
+def main():
+    logger.info('Starting bot...')
     try:
         bot = Bot()
-        asyncio.run(bot.start())
+        asyncio.run(bot.run())
     except KeyboardInterrupt:
-        logger.info("Бот остановлен в ручную!")
-    except TimeoutError:
-        logger.error("TimeoutError")
-        sleep(60)
-        run()
-    except ConnectionClosedError:
-        logger.error("ConnectionClosedError")
-        sleep(60)
-        run()
+        logger.debug("Keyboard Interrupt...")
+    except Exception as e:
+        logger.error("Exception " + str(e))
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == '__main__':
-    run()
+    main()
